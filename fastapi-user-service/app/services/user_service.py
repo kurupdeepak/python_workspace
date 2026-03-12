@@ -1,28 +1,29 @@
-from fastapi import HTTPException, status
+from typing import Annotated
 
+from fastapi import HTTPException, status, Depends
+
+from app.db.session import get_db
+from app.models.user import UserModel
 from app.schemas.user_request import UserRequest
 from app.schemas.user import User
+from sqlalchemy.orm import Session
+
+DBSession = Annotated[Session, Depends(get_db)]
 
 
 class UserService:
+    def create_user(self, user: UserRequest, db: DBSession):
+        db_user = UserModel(name=user.name, email=user.email)
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
 
-    def __init__(self):
-        self.users = {}
-        self.sequence = 1
+    def get_users(self,db: DBSession):
+        return db.query(UserModel).all()
 
-    def create_user(self, user: UserRequest):
-        user.id = self.sequence
-        self.sequence += 1
-        self.users[user.id] = User(
-            id=user.id, name=user.name, email=user.email)
-        return user
-
-    def get_users(self):
-        return list(self.users.values())
-
-    def get_user(self, user_id: int):
-        user = self.users.get(user_id)
-
+    def get_user(self, user_id: int, db: DBSession):
+        user = db.get(UserModel, user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -31,33 +32,29 @@ class UserService:
 
         return user
 
-    def update_user(self, user_id: int, user: UserRequest):
-        if user_id not in self.users:
+    def update_user(self, user_id: int, user: UserRequest, db: DBSession):
+        db_user = db.get(UserModel, user_id)
+        if db_user is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
+        db_user.name = user.name
+        db_user.email = user.email
+        db.refresh(db_user)
+        db.commit()
+        return db_user
 
-        updated_user = User(
-            id=user_id,
-            name=user.name,
-            email=user.email
-        )
-
-        self.users[user_id] = updated_user
-        return updated_user
-
-    def delete_user(self, user_id: int):
-
-        if user_id not in self.users:
+    def delete_user(self, user_id: int, db: DBSession):
+        db_user = db.get(UserModel, user_id)
+        if db_user is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-
-        del self.users[user_id]
-
-        return {"message": "User deleted"}
+        db.delete(db_user)
+        db.commit()
+        return {"message": f"User deleted {user_id}"}
 
 
 def get_user_service():

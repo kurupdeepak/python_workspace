@@ -1,0 +1,23 @@
+Interview Mode
+
+Problem Statement: Tic-Tac-Toe
+
+Design a Tic-Tac-Toe game that allows two players to play on an n × n board.
+
+Requirements:
+	1.	The game is played by two players, taking turns.
+	2.	Players place their symbol (X or O) on the board.
+	3.	A move is valid only if the selected cell is empty.
+	4.	After each move, determine if the player has won the game.
+	5.	A player wins if they fill an entire row, column, or diagonal.
+	6.	If all cells are filled and no player wins, the game is a draw.
+	7.	The system should support:
+	•	move(row, col, player) → place the player’s mark
+	•	Return:
+	•	0 → no winner yet
+	•	1 → player 1 wins
+	•	2 → player 2 wins
+
+Constraints:
+	•	Board size n should be configurable.
+	•	Each move operation should ideally run in O(1) time.
